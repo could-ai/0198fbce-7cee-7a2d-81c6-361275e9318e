@@ -1,5 +1,5 @@
 name: couldai_user_app
-description: "A new Flutter project."
+description: "A powerful password management app with categories and notes."
 publish_to: 'none' 
 version: 1.0.0+1
 environment:
@@ -9,6 +9,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   supabase_flutter: ^2.9.1
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:
