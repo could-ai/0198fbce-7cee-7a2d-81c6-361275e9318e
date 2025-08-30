@@ -1,235 +1,120 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 
 void main() {
-  runApp(const PasswordManagerApp());
+  runApp(const MyApp());
 }
 
-class PasswordManagerApp extends StatelessWidget {
-  const PasswordManagerApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
+  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Password Manager',
+      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        // This is the theme of your application.
+        //
+        // TRY THIS: Try running your application with "flutter run". You'll see
+        // the application has a purple toolbar. Then, without quitting the app,
+        // try changing the seedColor in the colorScheme below to Colors.green
+        // and then invoke "hot reload" (save your changes or press the "hot
+        // reload" button in a Flutter-supported IDE, or press "r" if you used
+        // the command line to start the app).
+        //
+        // Notice that the counter didn't reset back to zero; the application
+        // state is not lost during the reload. To reset the state, use hot
+        // restart instead.
+        //
+        // This works for code too, not just values: Most code changes can be
+        // tested with just a hot reload.
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const PasswordListScreen(),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class Password {
-  String id;
-  String title;
-  String username;
-  String password;
-  String? notes;
+class MyHomePage extends StatefulWidget {
+  const MyHomePag({super.key, required tis.title});
 
-  Password({
-    required this.id,
-    required this.title,
-    required this.username,
-    required this.password,
-    this.notes,
-  });
+  // This widget is the home page of your application. It is stateful, meaning
+  // that it has a State object (defined below) that contains fields that affect
+  // how it looks.
 
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'username': username,
-    'password': password,
-    'notes': notes,
-  };
+  // This class is the configuration for the state. It holds the values (in this
+  // case the title) provided by the parent (in this case the App widget) and
+  // used by the build method of the State. Fields in a Widget subclass are
+  // always marked "final".
 
-  factory Password.fromJson(Map<String, dynamic> json) => Password(
-    id: json['id'],
-    title: json['title'],
-    username: json['username'],
-    password: json['password'],
-    notes: json['notes'],
-  );
-}
-
-class PasswordListScreen extends StatefulWidget {
-  const PasswordListScreen({super.key});
+  final String title;
 
   @override
-  _PasswordListScreenState createState() => _PasswordListScreenState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _PasswordListScreenState extends State<PasswordListScreen> {
-  List<Password> _passwords = [];
+class _MyHomePageState extends State<MyHomePage> {
+  int _counter = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadPasswords();
-  }
-
-  Future<void> _loadPasswords() async {
-    final prefs = await SharedPreferences.getInstance();
-    final passwordsJson = prefs.getStringList('passwords') ?? [];
+  void _incrementCounter() {
     setState(() {
-      _passwords = passwordsJson.map((json) => Password.fromJson(jsonDecode(json))).toList();
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter+;
     });
-  }
-
-  Future<void> _savePasswords() async {
-    final prefs = await SharedPreferences.getInstance();
-    final passwordsJson = _passwords.map((p) => jsonEncode(p.toJson())).toList();
-    await prefs.setStringList('passwords', passwordsJson);
-  }
-
-  void _addPassword(Password password) {
-    setState(() {
-      _passwords.add(password);
-    });
-    _savePasswords();
-  }
-
-  void _deletePassword(String id) {
-    setState(() {
-      _passwords.removeWhere((p) => p.id == id);
-    });
-    _savePasswords();
   }
 
   @override
   Widget build(BuildContext context) {
+    // This method is rerun every time setState is called, for instance as done
+    // by the _incrementCounter method above.
+    //
+    // The Flutter framework has been optimized to make rerunning build methods
+    // fast, so that you can just rebuild anything that needs updating rather
+    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Password Manager'),
+        // TRY THIS: Try changing the color here to a specific color (to
+        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
+        // change color while the other colors stay the same.
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Tex(widget.title),
       ),
-      body: _passwords.isEmpty
-          ? const Center(child: Text('No passwords saved yet.'))
-          : ListView.builder(
-              itemCount: _passwords.length,
-              itemBuilder: (context, index) {
-                final password = _passwords[index];
-                return ListTile(
-                  title: Text(password.title),
-                  subtitle: Text(password.username),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deletePassword(password.id),
-                  ),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => PasswordDetailScreen(password: password),
-                    ),
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AddPasswordScreen(onAdd: _addPassword),
-          ),
-        ),
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-}
-
-class PasswordDetailScreen extends StatelessWidget {
-  final Password password;
-
-  const PasswordDetailScreen({super.key, required this.password});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Password Details'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Center(
+        // Center is a layout widget. It takes a single child and positions it
+        // in the middle of the parent.
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Title: ${password.title}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
-            Text('Username: ${password.username}'),
-            const SizedBox(height: 8),
-            Text('Password: ${password.password}'),
-            const SizedBox(height: 8),
-            if (password.notes != null) Text('Notes: ${password.notes}'),
+          // Column is also a layout widget. It takes a list of children and
+          // arranges them vertically. By default, it sizes itself to fit its
+          // children horizontally, and tries to be as tall as its parent.
+          //
+          // Column has various properties to control how it sizes itself and
+          // how it positions its children. Here we use mainAxisAlignment to
+          // center the children vertically; the main axis here is the vertical
+          // axis because Columns are vertical (the cross axis would be
+          // horizontal).
+          //
+          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
+          // action in the IDE, or press "p" in the console), to see the
+          // wireframe for each widget.
+          mainxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            const Text('You have pushed the button this many times:')
+            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
           ],
         ),
       ),
-    );
-  }
-}
-
-class AddPasswordScreen extends StatefulWidget {
-  final Function(Password) onAdd;
-
-  const AddPasswordScreen({super.key, required this.onAdd});
-
-  @override
-  _AddPasswordScreenState createState() => _AddPasswordScreenState();
-}
-
-class _AddPasswordScreenState extends State<AddPasswordScreen> {
-  final _titleController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Password'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: 'Title'),
-            ),
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
-            ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
-            ),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(labelText: 'Notes (optional)'),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                final password = Password(
-                  id: DateTime.now().toString(),
-                  title: _titleController.text,
-                  username: _usernameController.text,
-                  password: _passwordController.text,
-                  notes: _notesController.text.isEmpty ? null : _notesController.text,
-                );
-                widget.onAdd(password);
-                Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
+      floaingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: 'Increment',
+        child: const Icon(Icons.ad),
+      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
