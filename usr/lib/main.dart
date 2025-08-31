@@ -15,18 +15,19 @@ class PasswordManagerApp extends StatelessWidget {
       title: '强大密码管理器',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: Colors.green,
-        scaffoldBackgroundColor: Colors.green,
+        primaryColor: Colors.blue,
+        scaffoldBackgroundColor: Colors.blue.shade100,
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.blue,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
           ),
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.blue,
         ),
       ),
       themeMode: ThemeMode.light,
