@@ -16,14 +16,13 @@ class PasswordManagerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: Colors.green,
-        scaffoldBackgroundColor: Colors.green.shade100,
+        scaffoldBackgroundColor: Colors.green,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.green,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            primary: Colors.green,
-            onPrimary: Colors.white,
+            backgroundColor: Colors.green,
           ),
         ),
         floatingActionButtonTheme: FloatingActionButtonThemeData(
@@ -200,7 +199,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 class PasswordDetailScreen extends StatelessWidget {
   final Password password;
 
-  const PasswordDetailScreen({super.key, required this.password});
+  PasswordDetailScreen({super.key, required this.password});
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +233,7 @@ class PasswordDetailScreen extends StatelessWidget {
 class AddPasswordScreen extends StatefulWidget {
   final Function(Password) onAdd;
 
-  const AddPasswordScreen({super.key, required this.onAdd});
+  AddPasswordScreen({super.key, required this.onAdd});
 
   @override
   _AddPasswordScreenState createState() => _AddPasswordScreenState();
