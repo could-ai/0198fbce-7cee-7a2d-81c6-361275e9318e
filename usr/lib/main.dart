@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:math';
+import 'dart:async';
 
 void main() {
   runApp(const PasswordManagerApp());
@@ -131,6 +133,14 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
         title: const Text('密码管理器'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.gamepad),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GameScreen()),
+            ),
+            tooltip: '打飞机游戏',
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => Navigator.push(
               context,
@@ -195,6 +205,213 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
       ),
     );
   }
+}
+
+class GameScreen extends StatefulWidget {
+  const GameScreen({super.key});
+
+  @override
+  _GameScreenState createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  late Timer _timer;
+  double playerX = 0;
+  List<Bullet> bullets = [];
+  List<Enemy> enemies = [];
+  int score = 0;
+  bool gameOver = false;
+  Random random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _startGame();
+  }
+
+  void _startGame() {
+    _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!gameOver) {
+        setState(() {
+          _updateGame();
+        });
+      }
+    });
+  }
+
+  void _updateGame() {
+    // 更新子弹位置
+    bullets.removeWhere((bullet) {
+      bullet.y -= 5;
+      return bullet.y < 0;
+    });
+
+    // 更新敌机位置
+    enemies.removeWhere((enemy) {
+      enemy.y += 3;
+      return enemy.y > 600;
+    });
+
+    // 随机生成敌机
+    if (random.nextDouble() < 0.02) {
+      enemies.add(Enemy(random.nextDouble() * 350, 0));
+    }
+
+    // 碰撞检测
+    _checkCollisions();
+
+    // 检查游戏结束
+    if (enemies.any((enemy) => enemy.y > 550)) {
+      gameOver = true;
+      _timer.cancel();
+    }
+  }
+
+  void _checkCollisions() {
+    bullets.removeWhere((bullet) {
+      bool hit = false;
+      enemies.removeWhere((enemy) {
+        if ((bullet.x - enemy.x).abs() < 20 && (bullet.y - enemy.y).abs() < 20) {
+          hit = true;
+          score += 10;
+          return true;
+        }
+        return false;
+      });
+      return hit;
+    });
+  }
+
+  void _shoot() {
+    bullets.add(Bullet(playerX + 15, 550));
+  }
+
+  void _movePlayer(double deltaX) {
+    setState(() {
+      playerX += deltaX;
+      if (playerX < 0) playerX = 0;
+      if (playerX > 330) playerX = 330;
+    });
+  }
+
+  void _restartGame() {
+    setState(() {
+      playerX = 0;
+      bullets.clear();
+      enemies.clear();
+      score = 0;
+      gameOver = false;
+      _startGame();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('打飞机游戏'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            height: 50,
+            color: Colors.black,
+            child: Center(
+              child: Text(
+                '分数: $score',
+                style: const TextStyle(color: Colors.white, fontSize: 20),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onHorizontalDragUpdate: (details) {
+                _movePlayer(details.delta.dx);
+              },
+              child: Container(
+                color: Colors.black,
+                child: CustomPaint(
+                  painter: GamePainter(playerX: playerX, bullets: bullets, enemies: enemies),
+                  size: const Size(400, 600),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            height: 80,
+            color: Colors.grey[800],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _shoot,
+                  child: const Text('发射'),
+                ),
+                const SizedBox(width: 20),
+                if (gameOver)
+                  ElevatedButton(
+                    onPressed: _restartGame,
+                    child: const Text('重玩'),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Bullet {
+  double x, y;
+  Bullet(this.x, this.y);
+}
+
+class Enemy {
+  double x, y;
+  Enemy(this.x, this.y);
+}
+
+class GamePainter extends CustomPainter {
+  final double playerX;
+  final List<Bullet> bullets;
+  final List<Enemy> enemies;
+
+  GamePainter({required this.playerX, required this.bullets, required this.enemies});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+
+    // 绘制玩家飞船
+    paint.color = Colors.blue;
+    canvas.drawRect(Rect.fromLTWH(playerX, 550, 30, 30), paint);
+
+    // 绘制子弹
+    paint.color = Colors.yellow;
+    for (final bullet in bullets) {
+      canvas.drawCircle(Offset(bullet.x, bullet.y), 3, paint);
+    }
+
+    // 绘制敌机
+    paint.color = Colors.red;
+    for (final enemy in enemies) {
+      canvas.drawRect(Rect.fromLTWH(enemy.x, enemy.y, 20, 20), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 class PasswordDetailScreen extends StatelessWidget {
