@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -214,24 +215,35 @@ class GameScreen extends StatefulWidget {
   _GameScreenState createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   late Timer _timer;
   double playerX = 0;
   List<Bullet> bullets = [];
   List<Enemy> enemies = [];
   int score = 0;
   bool gameOver = false;
+  bool _isSpacePressed = false;
   Random random = Random();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startGame();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer.cancel();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   void _startGame() {
     _timer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!gameOver) {
+      if (!gameOver && mounted) {
         setState(() {
           _updateGame();
         });
@@ -242,7 +254,7 @@ class _GameScreenState extends State<GameScreen> {
   void _updateGame() {
     // 更新子弹位置
     bullets.removeWhere((bullet) {
-      bullet.y -= 5;
+      bullet.y -= 8;
       return bullet.y < 0;
     });
 
@@ -253,45 +265,52 @@ class _GameScreenState extends State<GameScreen> {
     });
 
     // 随机生成敌机
-    if (random.nextDouble() < 0.02) {
+    if (random.nextDouble() < 0.03) {
       enemies.add(Enemy(random.nextDouble() * 350, 0));
     }
 
     // 碰撞检测
     _checkCollisions();
 
-    // 检查游戏结束
-    if (enemies.any((enemy) => enemy.y > 550)) {
-      gameOver = true;
-      _timer.cancel();
+    // 检查游戏结束条件
+    for (Enemy enemy in enemies) {
+      if (enemy.y > 520 && (enemy.x - playerX).abs() < 30) {
+        gameOver = true;
+        _timer.cancel();
+        break;
+      }
     }
   }
 
   void _checkCollisions() {
-    bullets.removeWhere((bullet) {
-      bool hit = false;
-      enemies.removeWhere((enemy) {
-        if ((bullet.x - enemy.x).abs() < 20 && (bullet.y - enemy.y).abs() < 20) {
-          hit = true;
+    for (int i = bullets.length - 1; i >= 0; i--) {
+      for (int j = enemies.length - 1; j >= 0; j--) {
+        if ((bullets[i].x - enemies[j].x).abs() < 15 && (bullets[i].y - enemies[j].y).abs() < 15) {
+          bullets.removeAt(i);
+          enemies.removeAt(j);
           score += 10;
-          return true;
+          break;
         }
-        return false;
-      });
-      return hit;
-    });
+      }
+    }
   }
 
   void _shoot() {
-    bullets.add(Bullet(playerX + 15, 550));
+    if (!gameOver) {
+      setState(() {
+        bullets.add(Bullet(playerX + 15, 520));
+      });
+    }
   }
 
   void _movePlayer(double deltaX) {
-    setState(() {
-      playerX += deltaX;
-      if (playerX < 0) playerX = 0;
-      if (playerX > 330) playerX = 330;
-    });
+    if (!gameOver) {
+      setState(() {
+        playerX += deltaX;
+        if (playerX < 0) playerX = 0;
+        if (playerX > 330) playerX = 330;
+      });
+    }
   }
 
   void _restartGame() {
@@ -301,14 +320,23 @@ class _GameScreenState extends State<GameScreen> {
       enemies.clear();
       score = 0;
       gameOver = false;
-      _startGame();
     });
+    _timer.cancel();
+    _startGame();
   }
 
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
+  bool _onKey(KeyEvent event) {
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.space) {
+      if (!_isSpacePressed) {
+        _isSpacePressed = true;
+        _shoot();
+      }
+      return true;
+    } else if (event is KeyUpEvent && event.logicalKey == LogicalKeyboardKey.space) {
+      _isSpacePressed = false;
+      return true;
+    }
+    return false;
   }
 
   @override
@@ -321,52 +349,59 @@ class _GameScreenState extends State<GameScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            height: 50,
-            color: Colors.black,
-            child: Center(
-              child: Text(
-                '分数: $score',
-                style: const TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onHorizontalDragUpdate: (details) {
-                _movePlayer(details.delta.dx);
-              },
-              child: Container(
-                color: Colors.black,
-                child: CustomPaint(
-                  painter: GamePainter(playerX: playerX, bullets: bullets, enemies: enemies),
-                  size: const Size(400, 600),
+      body: Focus(
+        focusNode: _focusNode,
+        onKeyEvent: (node, event) {
+          return _onKey(event) ? KeyEventResult.handled : KeyEventResult.ignored;
+        },
+        autofocus: true,
+        child: Column(
+          children: [
+            Container(
+              height: 50,
+              color: Colors.black,
+              child: Center(
+                child: Text(
+                  gameOver ? '游戏结束！最终分数: $score' : '分数: $score',
+                  style: const TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ),
             ),
-          ),
-          Container(
-            height: 80,
-            color: Colors.grey[800],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _shoot,
-                  child: const Text('发射'),
-                ),
-                const SizedBox(width: 20),
-                if (gameOver)
-                  ElevatedButton(
-                    onPressed: _restartGame,
-                    child: const Text('重玩'),
+            Expanded(
+              child: GestureDetector(
+                onHorizontalDragUpdate: (details) {
+                  _movePlayer(details.delta.dx);
+                },
+                child: Container(
+                  color: Colors.black,
+                  child: CustomPaint(
+                    painter: GamePainter(playerX: playerX, bullets: bullets, enemies: enemies),
+                    size: const Size(400, 600),
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
-        ],
+            Container(
+              height: 80,
+              color: Colors.grey[800],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: gameOver ? null : _shoot,
+                    child: const Text('发射'),
+                  ),
+                  const SizedBox(width: 20),
+                  if (gameOver)
+                    ElevatedButton(
+                      onPressed: _restartGame,
+                      child: const Text('重玩'),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -395,12 +430,12 @@ class GamePainter extends CustomPainter {
 
     // 绘制玩家飞船
     paint.color = Colors.blue;
-    canvas.drawRect(Rect.fromLTWH(playerX, 550, 30, 30), paint);
+    canvas.drawRect(Rect.fromLTWH(playerX, 520, 30, 30), paint);
 
     // 绘制子弹
     paint.color = Colors.yellow;
     for (final bullet in bullets) {
-      canvas.drawCircle(Offset(bullet.x, bullet.y), 3, paint);
+      canvas.drawCircle(Offset(bullet.x, bullet.y), 4, paint);
     }
 
     // 绘制敌机
@@ -417,7 +452,7 @@ class GamePainter extends CustomPainter {
 class PasswordDetailScreen extends StatelessWidget {
   final Password password;
 
-  PasswordDetailScreen({super.key, required this.password});
+  const PasswordDetailScreen({super.key, required this.password});
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +486,7 @@ class PasswordDetailScreen extends StatelessWidget {
 class AddPasswordScreen extends StatefulWidget {
   final Function(Password) onAdd;
 
-  AddPasswordScreen({super.key, required this.onAdd});
+  const AddPasswordScreen({super.key, required this.onAdd});
 
   @override
   _AddPasswordScreenState createState() => _AddPasswordScreenState();
