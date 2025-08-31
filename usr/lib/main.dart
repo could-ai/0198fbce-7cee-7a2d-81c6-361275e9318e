@@ -14,9 +14,22 @@ class PasswordManagerApp extends StatelessWidget {
     return MaterialApp(
       title: '强大密码管理器',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system,
+      theme: ThemeData(
+        primaryColor: Colors.green,
+        scaffoldBackgroundColor: Colors.green.shade50,
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.green,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green,
+          ),
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Colors.green,
+        ),
+      ),
+      themeMode: ThemeMode.light,
       home: const PasswordListScreen(),
     );
   }
@@ -198,20 +211,19 @@ class PasswordDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('名称: ${password.name}', style: const TextStyle(fontSize: 18)),
-            const SizedBox(height: 8),
-            Text('用户名: ${password.username}'),
-            const SizedBox(height: 8),
-            Text('密码: ${password.password}'),
-            const SizedBox(height: 8),
-            Text('URL: ${password.url}'),
-            const SizedBox(height: 8),
-            Text('分类: ${password.category}'),
-            const SizedBox(height: 8),
-            Text('笔记: ${password.notes}'),
-          ],
-        ),
+        children: [
+          Text('名称: ${password.name}', style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 8),
+          Text('用户名: ${password.username}'),
+          const SizedBox(height: 8),
+          Text('密码: ${password.password}'),
+          const SizedBox(height: 8),
+          Text('URL: ${password.url}'),
+          const SizedBox(height: 8),
+          Text('分类: ${password.category}'),
+          const SizedBox(height: 8),
+          Text('笔记: ${password.notes}'),
+        ],
       ),
     );
   }
