@@ -16,7 +16,7 @@ class PasswordManagerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: Colors.green,
-        scaffoldBackgroundColor: Colors.green.shade50,
+        scaffoldBackgroundColor: Colors.green,
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.green,
         ),
@@ -199,7 +199,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
 class PasswordDetailScreen extends StatelessWidget {
   final Password password;
 
-  const PasswordDetailScreen({super.key, required this.password});
+  PasswordDetailScreen({super.key, required this.password});
 
   @override
   Widget build(BuildContext context) {
@@ -211,19 +211,20 @@ class PasswordDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('名称: ${password.name}', style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 8),
-          Text('用户名: ${password.username}'),
-          const SizedBox(height: 8),
-          Text('密码: ${password.password}'),
-          const SizedBox(height: 8),
-          Text('URL: ${password.url}'),
-          const SizedBox(height: 8),
-          Text('分类: ${password.category}'),
-          const SizedBox(height: 8),
-          Text('笔记: ${password.notes}'),
-        ],
+          children: [
+            Text('名称: ${password.name}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 8),
+            Text('用户名: ${password.username}'),
+            const SizedBox(height: 8),
+            Text('密码: ${password.password}'),
+            const SizedBox(height: 8),
+            Text('URL: ${password.url}'),
+            const SizedBox(height: 8),
+            Text('分类: ${password.category}'),
+            const SizedBox(height: 8),
+            Text('笔记: ${password.notes}'),
+          ],
+        ),
       ),
     );
   }
@@ -232,7 +233,7 @@ class PasswordDetailScreen extends StatelessWidget {
 class AddPasswordScreen extends StatefulWidget {
   final Function(Password) onAdd;
 
-  const AddPasswordScreen({super.key, required this.onAdd});
+  AddPasswordScreen({super.key, required this.onAdd});
 
   @override
   _AddPasswordScreenState createState() => _AddPasswordScreenState();
